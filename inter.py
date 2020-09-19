@@ -1,5 +1,6 @@
 import pandas as pd, argparse
 import matplotlib.pyplot as plt
+import numpy as np
 psr = argparse.ArgumentParser()
 psr.add_argument('-1', dest="ch1", help="input ch1 xlsx file")
 #psr.add_argument('-2', dest="ch2", help="input ch2 xlsx file")
@@ -8,6 +9,7 @@ psr.add_argument('-1', dest="ch1", help="input ch1 xlsx file")
 args = psr.parse_args()
 args.ch2 = args.ch1 + '_Ch2.csv'
 prefix = args.ch1.split('/')[-1]
+tmpch1 = args.ch1
 args.math = args.ch1 + '_Math1.csv'
 args.output = args.ch1 + '_Voltage.png'
 args.ch1 = args.ch1 + '_Ch1.csv'
@@ -21,6 +23,7 @@ noisestd = ch1['voltage'][:1500].std()
 ch1['volNoNoise'] = ch1['voltage']-noisemean
 print('noise mean:{};noise std:{}'.format(noisemean, noisestd))
 ch1['sumvol']=ch1['volNoNoise'].cumsum()
+'''
 fig, ax = plt.subplots()
 ax.plot(ch1['time'], ch1['sumvol'], label='ch1')
 ax.plot(ch2['time'], ch2['voltage'], label='ch2')
@@ -28,5 +31,20 @@ ax.plot(math['time'], math['voltage'], label='math')
 ax.set_title('{} voltage'.format(prefix))
 ax.legend()
 fig.savefig(args.output)
+plt.close()
+'''
+fig, ax = plt.subplots()
+# time interval 1e-10,f interval 1e10/5000
+ax.plot(np.arange(chLength)/500, np.abs(np.fft.fft(ch1['sumvol'])), label='ch1 fft')
+ax.set_xlabel('f/GHz')
+ax2 = ax.twiny()
+color = 'tab:red'
+ax2.set_xlabel('f/GHz', color=color)
+ax2.plot(np.arange(500)/500, np.abs(np.fft.fft(ch1['sumvol'])[0:500]), label='ch1 fft 0-1GHz', color=color)
+ax2.tick_params(axis='x', labelcolor=color)
+ax2.legend(loc=9)
+ax.set_title('{} fft frequency'.format(prefix))
+ax.legend()
+fig.savefig(tmpch1+'_fft.png')
 plt.close()
 #print(ch)
